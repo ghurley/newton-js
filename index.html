@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Canvas Pixel Stuff</title>
+<!-- Date: 2012-03-25 -->
+<style>
+  body{
+    width: 40em;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  h1{
+      font-family: Arial, Helvetica, sans-serif;
+  }
+</style>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML-full"></script>
+</head>
+<body>
+  <h1>Newton's Method Fractal for z<sup>3</sup> - 1 = 0</h1>
+  <p>
+    Consider the roots for the equation `z^3 -1 = 0`. In the Real domain there
+    is only a single solution:&nbsp;1. Over the complex plane however there are
+    two additonal roots: `-1/2 + sqrt(3)/2 i` and `-1/2 - sqrt(3)/2 i`. For any
+    starting complex number we can use Newton's method to succesively approach
+    one of the roots. Newton's method is:
+  </p>
+
+  <p>
+    `x_1 = x_0 - f(x_0)/f^'(x_0)`
+
+    which in this case works out to:
+
+    `  x_1 = x_0 - (x_0^3 - 1)/(3x_0^2)`
+  </p>
+
+  <p>
+    Which root we approach will vary depending on the initial complex number
+    chosen and that's what this fractal represents. Each pixel represents a
+    complex number to which we apply several iterations of Newton's method. If
+    we converge to one of the roots we color it accordingly. The hue represents
+    which of the roots was approximated and the brightness encodes how quickly
+    that solution was approached; that is, the number of iterations to get
+    within some &epsilon; of the true root.
+  </p>
+
+  <canvas id="canvas"/>
+
+  <h3>Notes</h3>
+  <p>
+    Complex number multiplication: `(a+bi)(c+di) = (ac - bd)+(ad+bc)i`
+  </p>
+
+  <p>
+    Complex number division: Rationalize the denominator by multiplying the
+    fraction with the conjugate of the denominator. A complex number multiplied
+    by it's conjugate will yeild a real number.
+  </p>
+
+  <h2>Why did I write this?</h2>
+  <p>
+    It's a long story. One of my earliest joy of programming moments came from
+    coding up  Newton's Method in QBASIC, when I was a teenager. Fractals where
+    "in" back then and once I learned what the Newton's Method fratal represented
+    I was able to work out the math and kludge some code together to get it to
+    draw. Slowely.
+  </p>
+  <script src="newton.js"></script>
+</body>
+</html>
