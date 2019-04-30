@@ -5,6 +5,28 @@ const root1 = {real: 1, imag:0};
 const root2 = {real: -0.5, imag: Math.sqrt(3)/2};
 const root3 = {real: -0.5, imag: -(Math.sqrt(3)/2)};
 
+// JS has no complex number support but our needs here are pretty limited
+// so we can just create a struct and a single multiplication function to
+// do what we need.
+var comp_new = function(real_part, imag_part) {
+  return {real: real_part, imag: imag_part};
+};
+
+var comp_mult = function(c1, c2) {
+  // (a+bi)(c+di) = (ac-bd)+(ad+bc)i
+  return {real: c1.real * c2.real - c1.imag * c2.imag,
+          imag: c1.real * c2.imag + c1.imag * c2.real};
+};
+
+// comp_approx_equal will return a bool that tells whether complex_num1
+// and complex_num2 are (close to) equal. The imaginary and real portions
+// are floats so we can't just check for equality on the component
+// parts.
+var comp_approx_equal = function(complex_num1, complex_num2, epsilon = 0.001) {
+  return Math.abs(complex_num1.real - complex_num2.real) < epsilon &&
+         Math.abs(complex_num1.imag - complex_num2.imag) < epsilon;
+};
+
 var newtons_method = function(complex_num) {
   const comp_squared = comp_mult(complex_num, complex_num);
   const comp_cubed = comp_mult(comp_squared, complex_num)
@@ -14,6 +36,9 @@ var newtons_method = function(complex_num) {
 
   numerator = comp_mult(numerator, conjugate);
   denominator = comp_mult(denominator, conjugate);
+  // JS implementation of floats is useful here since division by 0 will return
+  // NaN. The rest of the algorithm can handle that by essentially ignoring it.
+  // Eventually, it will be colored black.
   return comp_mult(numerator, comp_new(1/denominator.real, 0));
 };
 
@@ -22,7 +47,7 @@ var get_root_for_complex_point = function(comp_num) {
   let next = comp_num;
   let i = 0;
 
-  for (; i < 15; ++i) {
+  for (; i < 30; ++i) {
     previous = next;
     let result = newtons_method(previous);
     next = comp_new(previous.real - result.real, previous.imag - result.imag);
@@ -34,10 +59,10 @@ var get_root_for_complex_point = function(comp_num) {
   return {result: next, iterations: i};
 };
 
-const RED_C   = [255, 0, 0, 255];
-const GREEN_C = [0, 255, 0, 255];
-const BLUE_C  = [0, 0, 255, 255];
-const BLACK_C = [0, 0, 0, 255];
+const RED_C   = [255, 0,  0,  255];
+const GREEN_C = [0,  255, 0,  255];
+const BLUE_C  = [0,   0, 255, 255];
+const BLACK_C = [0,   0,  0,  255];
 
 var scale_color = function(color, scale) {
   let new_color = [];
@@ -57,34 +82,26 @@ var set_pixel = function(image_data, x, y, color) {
   image_data.data[ix + 3] = color[3];
 };
 
-// Pixel coordinates start at 0, 0 and go to something like 640, 480 but the
-// range of the mathematical operations is the complex plane
+
+ // pixel_to_math_range returns a scale function that maps a pixel coordinate
+ // (e.g. 620) to the mathematical value at that point as defined by the range
+ // between `start` and `end`.
+ // start: lowest mathematical value in the dimension (e.g. -1.5)
+ // end: greatest mathematical value in the dimension (e.g. 1.5)
+ // pixels: the number of pixels across which to map the mathematical range
+ // scaler: optional scaler. Set to -1 to flip the mapping. Useful because
+ // graphs tend to put lower y values at the bottom of the graph whereas
+ // computer graphics systems tend to put the lower y values at the top of
+ // the screen.
 var pixel_to_math_range = function(start, end, pixels, scaler = 1) {
   const range = Math.max(start, end) - Math.min(start, end);
-  return function(val){
-    return start + scaler * (range/pixels * val);
+  return function(pixel_coord){
+    return start + scaler * (range/pixels * pixel_coord);
   };
 };
 
-var comp_new = function(real_part, imag_part) {
-  return {real: real_part, imag: imag_part};
-};
-
-var comp_mult = function(c1, c2) {
-  // (a+bi)(c+di) = (ac-bd)+(ad+bc)i
-  return {real: c1.real * c2.real - c1.imag * c2.imag,
-          imag: c1.real * c2.imag + c1.imag * c2.real};
-};
 
 
-// comp_approx_equal will return a bool that tells whether complex_num1
-// and complex_num2 are (close to) equal. The imaginary and real portions
-// are floats so we can't just check for equality on the component
-// parts.
-var comp_approx_equal = function(complex_num1, complex_num2, epsilon = 0.001) {
-  return Math.abs(complex_num1.real - complex_num2.real) < epsilon &&
-         Math.abs(complex_num1.imag - complex_num2.imag) < epsilon;
-};
 
 // The canvas bitmap stuff.
 const vert_px = 480;
@@ -106,14 +123,18 @@ const img_data = ctx.createImageData(horiz_px, vert_px);
 console.timeEnd('canvas init');
 
 console.time('computation');
-for (let y = 0; y < img_data.height; ++y) {
-  for (let x = 0; x < img_data.width; ++x) {
+for (let y = 0; y < vert_px; ++y) {
+  for (let x = 0; x < horiz_px; ++x) {
 
     const comp_num = comp_new(real_scale(x), imag_scale(y));
     const result = get_root_for_complex_point(comp_num);
     const res = result.result;
 
-    let color = BLACK_C;  // Didn't reach a root before limit.
+    // Need some way to color points for which we can't find a root before we
+    // stop iterating. In the limit, this should only happen for 0 + 0i, for
+    // which Newton's method goes nowhere but in practice, we can't iterate
+    // forever and floating point numbers only have so much resolution.
+    let color = BLACK_C;
     if (comp_approx_equal(res, root1)) {
       color = RED_C;
     } else if (comp_approx_equal(res, root2)) {
