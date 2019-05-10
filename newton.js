@@ -83,24 +83,22 @@ var set_pixel = function(image_data, x, y, color) {
 };
 
 
- // pixel_to_math_range returns a scale function that maps a pixel coordinate
- // (e.g. 620) to the mathematical value at that point as defined by the range
- // between `start` and `end`.
- // start: lowest mathematical value in the dimension (e.g. -1.5)
- // end: greatest mathematical value in the dimension (e.g. 1.5)
- // pixels: the number of pixels across which to map the mathematical range
- // scaler: optional scaler. Set to -1 to flip the mapping. Useful because
- // graphs tend to put lower y values at the bottom of the graph whereas
- // computer graphics systems tend to put the lower y values at the top of
- // the screen.
+// pixel_to_math_range returns a scale function that maps a pixel coordinate
+// (e.g. 620) to the mathematical value at that point as defined by the range
+// between `start` and `end`.
+// start: lowest mathematical value in the dimension (e.g. -1.5)
+// end: greatest mathematical value in the dimension (e.g. 1.5)
+// pixels: the number of pixels across which to map the mathematical range
+// scaler: optional scaler. Set to -1 to flip the mapping. Useful because
+// graphs tend to put lower y values at the bottom of the graph whereas
+// computer graphics systems tend to put the lower y values at the top of
+// the screen.
 var pixel_to_math_range = function(start, end, pixels, scaler = 1) {
   const range = Math.max(start, end) - Math.min(start, end);
   return function(pixel_coord){
     return start + scaler * (range/pixels * pixel_coord);
   };
 };
-
-
 
 
 // The canvas bitmap stuff.
