@@ -18,10 +18,10 @@ var comp_mult = function(c1, c2) {
           imag: c1.real * c2.imag + c1.imag * c2.real};
 };
 
-// comp_approx_equal will return a bool that tells whether complex_num1
-// and complex_num2 are (close to) equal. The imaginary and real portions
-// are floats so we can't just check for equality on the component
-// parts.
+// comp_approx_equal returns a true if complex_num1 is sufficiently "close" to
+// complex_num2. We do this because: floats. Strictly, we should use the
+// pythagorean theorem to get the distance but it's faster to use a simple
+// bounding box and good enough for our purposes.
 var comp_approx_equal = function(complex_num1, complex_num2, epsilon = 0.001) {
   return Math.abs(complex_num1.real - complex_num2.real) < epsilon &&
          Math.abs(complex_num1.imag - complex_num2.imag) < epsilon;
@@ -70,11 +70,19 @@ var scale_color = function(color, scale) {
   for (let i = 0; i < 3; ++i) {
     new_color[i] = color[i] / divisor;
   }
-  new_color[3] = color[3];  // "Don't touch the alpha, man."
+  new_color[3] = color[3];  // Alpha channel
   return new_color;
 };
 
+// set_pixel colors a pixel for given x, y coordinates. ImageData (as returned
+// by ctx.createImageData()) is a one dimensional array of numbers that's 4
+// times longer than the total number of pixels. That is, it's a linear
+// representation of the RGBA values for all pixels.
 var set_pixel = function(image_data, x, y, color) {
+  if (y > image_data.height || x > image_data.width) {
+    console.log(`Invalid coordinates x: ${x} y:${y}`);
+    return;
+  }
   const ix = (y * image_data.width + x) * 4;
   image_data.data[ix] = color[0];
   image_data.data[ix + 1] = color[1];
@@ -128,10 +136,10 @@ for (let y = 0; y < vert_px; ++y) {
     const result = get_root_for_complex_point(comp_num);
     const res = result.result;
 
-    // Need some way to color points for which we can't find a root before we
-    // stop iterating. In the limit, this should only happen for 0 + 0i, for
-    // which Newton's method goes nowhere but in practice, we can't iterate
-    // forever and floating point numbers only have so much resolution.
+    // Leave the pixel black if we can't find a root after N iterations.
+    // Mathematically, this only happen for 0 + 0i (for which Newton's method
+    // leads us to divide by 0) but in practice, we can't iterate forever and
+    // floating point numbers only have so much resolution.
     let color = BLACK_C;
     if (comp_approx_equal(res, root1)) {
       color = RED_C;
